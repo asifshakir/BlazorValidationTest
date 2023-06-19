@@ -1,0 +1,90 @@
+﻿@page "/"
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> Logger
+
+<PageTitle>Index</PageTitle>
+
+<h2>New Ship Entry Form</h2>
+
+<EditForm EditContext="@editContext" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <p>
+        <label>
+            Identifier:
+            <InputText @bind-Value="starship.Identifier" />
+        </label>
+    </p>
+
+    <button type="submit">Submit</button>
+
+    <p>
+        <a href="http://www.startrek.com/">Star Trek</a>,
+        ©1966-2019 CBS Studios, Inc. and
+        <a href="https://www.paramount.com">Paramount Pictures</a>
+    </p>
+</EditForm>
+
+@code {
+    private Starship starship =
+    new()
+            {
+                Identifier = "NCC-1701",
+                Classification = "Exploration",
+                MaximumAccommodation = 150,
+                IsValidatedDesign = true,
+                ProductionDate = new DateTime(2245, 4, 11)
+            };
+    private EditContext? editContext;
+    private ValidationMessageStore? messageStore;
+
+    protected override void OnInitialized()
+    {
+        editContext = new(starship);
+        editContext.OnValidationRequested += HandleValidationRequested;
+        messageStore = new(editContext);
+    }
+
+    private void HandleValidationRequested(object? sender,
+        ValidationRequestedEventArgs args)
+    {
+        if (editContext is null || messageStore is null) return;
+
+        messageStore.Clear();
+
+        // Custom validation logic
+        var fieldName = nameof(starship.Identifier);
+        var fieldIdentifier = editContext.Field(fieldName);
+        var fieldValue = starship.Identifier;
+
+        ValidateEmptyString(messageStore, fieldIdentifier, fieldValue);
+        ValidateLargeString(messageStore, fieldIdentifier, fieldValue ?? string.Empty, 5);
+
+    }
+
+    private void ValidateEmptyString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string? fieldValue)
+    {
+        if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
+        if (string.IsNullOrEmpty(fieldValue))
+        {
+            messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} cannot be empty.");
+        }
+    }
+
+    private void ValidateLargeString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string fieldValue, int Size)
+    {
+        if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
+        if (fieldValue.Length > Size)
+        {
+            messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} cannot be more than five characters.");
+        }
+    }
+
+
+    private async Task HandleValidSubmit()
+    {
+        Logger.LogInformation("HandleSubmit called: Form is valid");
+        await Task.CompletedTask;
+    }
+}
