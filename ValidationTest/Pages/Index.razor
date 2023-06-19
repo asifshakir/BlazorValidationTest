@@ -58,7 +58,6 @@
         var fieldIdentifier = editContext.Field(fieldName);
         var fieldValue = starship.Identifier;
 
-        ValidateEmptyString(messageStore, fieldIdentifier, fieldValue);
         ValidateLargeString(messageStore, fieldIdentifier, fieldValue ?? string.Empty, 5);
 
     }
@@ -74,6 +73,8 @@
 
     private void ValidateLargeString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string fieldValue, int Size)
     {
+        ValidateEmptyString(messageStore, fieldIdentifier, fieldValue);
+
         if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
         if (fieldValue.Length > Size)
         {
