@@ -17,6 +17,13 @@
         </label>
     </p>
 
+    <p>
+        <label>
+            Maximum Accommodation:
+            <InputNumber @bind-Value="starship.MaximumAccommodation" />
+        </label>
+    </p>
+
     <button type="submit">Submit</button>
 
     <p>
@@ -42,28 +49,50 @@
     protected override void OnInitialized()
     {
         editContext = new(starship);
-        editContext.OnValidationRequested += HandleValidationRequested;
+        editContext.OnValidationRequested += ValidateLoanApplication;
         messageStore = new(editContext);
     }
 
-    private async void HandleValidationRequested(object? sender,
+    private void ValidateLoanApplication(object? sender,
         ValidationRequestedEventArgs args)
     {
         if (editContext is null || messageStore is null) return;
 
         messageStore.Clear();
 
-        // Custom validation logic
-        var fieldName = nameof(starship.Identifier);
-        var fieldIdentifier = editContext.Field(fieldName);
-        var fieldValue = starship.Identifier;
-
-        await ValidateLargeString(messageStore, fieldIdentifier, fieldValue ?? string.Empty, 5);
+        ValidateLoanApplication(messageStore, editContext, starship);
     }
 
-    private async Task ValidateEmptyString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string? fieldValue)
+    private async void ValidateLoanApplication(
+        ValidationMessageStore messageStore, 
+        EditContext editContext, 
+        Starship starship)
+    {
+        // Custom validation logic
+        await ValidateLargeString(
+                messageStore,
+                editContext.Field(nameof(starship.Identifier)),
+                starship.Identifier ?? string.Empty,
+                5);
+
+        await ValidateEmptyString(
+                messageStore, 
+                editContext.Field(nameof(starship.Identifier)), 
+                starship.Identifier ?? string.Empty);
+
+        await ValidateNumber(
+                messageStore,
+                editContext.Field(nameof(starship.MaximumAccommodation)),
+                starship.MaximumAccommodation);
+    }
+
+    private async Task ValidateEmptyString(
+        ValidationMessageStore messageStore, 
+        FieldIdentifier fieldIdentifier, 
+        string? fieldValue)
     {
         if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
+        
         if (string.IsNullOrEmpty(fieldValue))
         {
             messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} cannot be empty.");
@@ -71,6 +100,22 @@
 
         await Task.CompletedTask;
     }
+
+    private async Task ValidateNumber(
+        ValidationMessageStore messageStore,
+        FieldIdentifier fieldIdentifier,
+        int fieldValue)
+    {
+        if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
+
+        if (fieldValue > 100)
+        {
+            messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} is not a valid number.");
+        }
+
+        await Task.CompletedTask;
+    }
+
 
     private async Task ValidateLargeString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string fieldValue, int Size)
     {
