@@ -46,7 +46,7 @@
         messageStore = new(editContext);
     }
 
-    private void HandleValidationRequested(object? sender,
+    private async void HandleValidationRequested(object? sender,
         ValidationRequestedEventArgs args)
     {
         if (editContext is null || messageStore is null) return;
@@ -58,28 +58,32 @@
         var fieldIdentifier = editContext.Field(fieldName);
         var fieldValue = starship.Identifier;
 
-        ValidateLargeString(messageStore, fieldIdentifier, fieldValue ?? string.Empty, 5);
-
+        await ValidateLargeString(messageStore, fieldIdentifier, fieldValue ?? string.Empty, 5);
     }
 
-    private void ValidateEmptyString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string? fieldValue)
+    private async Task ValidateEmptyString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string? fieldValue)
     {
         if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
         if (string.IsNullOrEmpty(fieldValue))
         {
             messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} cannot be empty.");
         }
+
+        await Task.CompletedTask;
     }
 
-    private void ValidateLargeString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string fieldValue, int Size)
+    private async Task ValidateLargeString(ValidationMessageStore messageStore, FieldIdentifier fieldIdentifier, string fieldValue, int Size)
     {
-        ValidateEmptyString(messageStore, fieldIdentifier, fieldValue);
+        await ValidateEmptyString(messageStore, fieldIdentifier, fieldValue);
 
         if (messageStore == null || messageStore[fieldIdentifier].Any()) return;
         if (fieldValue.Length > Size)
         {
             messageStore.Add(fieldIdentifier, $"{fieldIdentifier.FieldName} cannot be more than five characters.");
         }
+
+        await Task.CompletedTask;
+
     }
 
 
